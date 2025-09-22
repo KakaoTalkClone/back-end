@@ -57,6 +57,10 @@ dependencies {
 	// swagger
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
+	//open ai
+	implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '5.0.0-alpha.14'
+	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.17.2' // for Deserializatio
+
 }
 
 
