@@ -1,11 +1,15 @@
 package com.ocean.piuda.security.jwt.controller;
 
 import com.ocean.piuda.global.api.dto.ApiData;
+import com.ocean.piuda.security.jwt.util.TokenCookieFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +30,8 @@ import com.ocean.piuda.security.oauth2.principal.PrincipalDetails;
 public class AuthController {
 
     private final AuthService authService;
+    private final TokenCookieFactory tokenCookieFactory;
+
 
     /** 자체 회원가입 유저의 로그인 (공개) */
     @PostMapping("/login")
@@ -34,9 +40,13 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "로그인 요청 바디", required = true
             )
-            @RequestBody UsernameLoginRequestDto request
+            @RequestBody UsernameLoginRequestDto request,
+            HttpServletResponse response
     ) {
-        return ApiData.ok(authService.usernameLogin(request));
+        TokenResponseDto dto = authService.usernameLogin(request); // 서비스는 토큰만 생성/검증
+        ResponseCookie cookie = tokenCookieFactory.buildAccessTokenCookie(dto.getAccess());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ApiData.ok(dto);
     }
 
     /** 자체 회원 가입 (1차, 공개) */

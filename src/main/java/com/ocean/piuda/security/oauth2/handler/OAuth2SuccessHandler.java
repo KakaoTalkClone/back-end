@@ -1,5 +1,6 @@
 package com.ocean.piuda.security.oauth2.handler;
 
+import com.ocean.piuda.security.jwt.util.TokenCookieFactory;
 import com.ocean.piuda.user.entity.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,12 +37,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     @Value("${oauth2.url.path.auth}")
     private String AUTH_PATH;
 
-    // 쿠키 이름은 상수로 관리
-    private static final String ACCESS_TOKEN_COOKIE = "ACCESS_TOKEN";
-
 
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenCookieFactory tokenCookieFactory;
 
 
     @Override
@@ -57,16 +56,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         /**
          * access token 을 쿠키로 전달
-         * HttpOnly=true
-         * 일단 Secure 설정 안했는데 https 배포 시 secure=true 설정 활성화
-         * SameSite는 디폴트인 lax 로
          */
-        ResponseCookie cookie = ResponseCookie.from(ACCESS_TOKEN_COOKIE, accessToken)
-                .httpOnly(true)
-//                .secure(true)
-                .path("/")              // 필요에 따라 좁혀도 됨
-                .maxAge(computeMaxAgeSeconds(accessToken))  // 토큰 만료와 동기화
-                .build();
+        ResponseCookie cookie = tokenCookieFactory.buildAccessTokenCookie(accessToken);
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         // 리다이렉트 URL 생성
@@ -76,15 +67,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     }
 
-    private long computeMaxAgeSeconds(String accessToken) {
-        try {
-            LocalDateTime exp = jwtTokenProvider.extractExpiration(accessToken);
-            long seconds = Duration.between(LocalDateTime.now(ZoneId.systemDefault()), exp).getSeconds();
-            return Math.max(seconds, 1L); // 음수/0 방지
-        } catch (Exception e) {
-            return Duration.ofHours(1).getSeconds();  // 보수적으로 1시간로 설정
-        }
-    }
 
 
     private String getRedirectUrlByRole(User user) {
