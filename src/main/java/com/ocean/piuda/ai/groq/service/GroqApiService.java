@@ -59,7 +59,7 @@ public class GroqApiService {
                         + String.valueOf(request.sentence());
 
         ArrayNode messages = groqApiUtil.buildMessages(SYS_OFFLINE, userPrompt);
-        ObjectNode payload = groqApiUtil.buildRequestPayload(model, messages, null, null);
+        ObjectNode payload = groqApiUtil.buildRequestPayload(model, messages);
 
         ResponseEntity<String> resp = groqApiUtil.postChat(payload);
         String raw = resp.getBody();
@@ -89,7 +89,7 @@ public class GroqApiService {
 
         ArrayNode messages = groqApiUtil.buildMessages(sysPrompt, String.valueOf(req.prompt()));
         ObjectNode payload = groqApiUtil.buildRequestPayload(
-                model, messages, req.temperature(), req.maxTokens()
+                model, messages
         );
 
         ResponseEntity<String> resp = groqApiUtil.postChat(payload);

@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/ai/groq")
 @RequiredArgsConstructor
-@Tag(name = "Groq AI API", description = "text to text Groq AI API")
+@Tag(name = "Groq AI API", description = "Groq 기반 자연어 처리 AI API")
 public class GroqApiController {
 
     private final GroqApiService groqApiService;
 
     @PostMapping("/complete")
     @Operation(
-            summary = "프롬프트 완성",
+            summary = "프롬프트 처리",
             description = """
                     사용자 프롬프트를 Groq 모델에 전달해 응답을 생성합니다.
                     - `useRealtime=true`면 실시간 웹 검색을 통한 최신 정보가 반영된 응답을 생성하며, 해당 응답의 출처는 `meta.executedTools`에만 담겨 반환됩니다.
@@ -31,7 +31,7 @@ public class GroqApiController {
     )
     public ApiData<GroqPromptResponse> complete(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "프롬프트/옵션(temperature, maxTokens, useRealtime)",
+                    description = "프롬프트/옵션(useRealtime)",
                     required = true
             )
             @RequestBody @Valid GroqPromptRequest request

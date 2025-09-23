@@ -114,12 +114,10 @@ public class GroqApiUtil {
     }
 
     /** 공통: 요청 payload 생성 */
-    public ObjectNode buildRequestPayload(String model, ArrayNode messages, Double temperature, Integer maxTokens) {
+    public ObjectNode buildRequestPayload(String model, ArrayNode messages) {
         ObjectNode root = MAPPER.createObjectNode();
         root.put("model", model);
         root.set("messages", messages);
-        if (temperature != null) root.put("temperature", temperature);
-        if (maxTokens != null) root.put("max_tokens", maxTokens);
         if (!isCompound(model)) {
             // 오프라인 모델은 툴 사용 차단
             root.put("tool_choice", "none");
