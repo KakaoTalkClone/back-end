@@ -14,6 +14,7 @@ public class UserCommandService {
 
     public void patch( Long userId, UserUpdateRequestDto req) {
         User user = userQueryService.getUserById(userId);
+        user.update(req);
     }
 
 
