@@ -1,4 +1,4 @@
-package com.ocean.piuda.aws.utils;
+package com.ocean.piuda.aws.service;
 
 import com.ocean.piuda.aws.dto.response.GeneratePresignedPutUrlResponse;
 import com.ocean.piuda.aws.properties.AwsConfigProperties;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class S3Utils {
+public class S3Service {
 
     private final S3Presigner s3Presigner;
     private final AwsConfigProperties aws;
