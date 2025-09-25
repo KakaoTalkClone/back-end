@@ -1,5 +1,6 @@
 package com.ocean.piuda.global.api.dto;
 
+import com.ocean.piuda.global.enums.SortEnum;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

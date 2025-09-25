@@ -12,12 +12,13 @@ import static org.springframework.http.HttpStatus.*;
 public enum ExceptionType {
     // common
     UNEXPECTED_SERVER_ERROR(INTERNAL_SERVER_ERROR, "C001", "예상치못한 서버에러 발생"),
-    BINDING_ERROR(BAD_REQUEST, "C002", "바인딩시 에러 발생"),
+    BINDING_ERROR(BAD_REQUEST, "C002", "잘못된 바인딩/조합"),
     ESSENTIAL_FIELD_MISSING_ERROR(NO_CONTENT , "C003","필수적인 필드 부재"),
     INVALID_VALUE_ERROR(NOT_ACCEPTABLE , "C004","값이 유효하지 않음"),
     DUPLICATE_VALUE_ERROR(NOT_ACCEPTABLE , "C005","값이 중복됨"),
     NOT_VALID_REQUEST_FIELDS_ERROR(BAD_REQUEST , "C006","요청 필드 검증에 실패했습니다."),
     MEDIA_TYPE_MISMATCHED(BAD_REQUEST, "C007","잘못된 콘텐츠 타입 사용"),
+    RESOURCE_NOT_FOUND(NOT_FOUND,"C008","해당 자원을 찾을 수 없습니다."),
 
     // auth
     INVALID_REFRESH_TOKEN(NOT_ACCEPTABLE , "A001","유효하지 않은 리프레시 토큰"),
