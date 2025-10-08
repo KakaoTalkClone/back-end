@@ -16,12 +16,12 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://127.0.0.1:5500",
                         "http://localhost:3000",
                         "http://localhost:5173",
+                        "http://localhost:4173",
                         "https://localhost:3000",
                         "https://localhost:5173",
 
                         // 프론트 배포
                         "https://어쩌구저쩌구.vercel.app",
-                        "https://next-auth-templates.vercel.app",
 
                         //스웨거용
                         "https://www.jungjiyu.com",
