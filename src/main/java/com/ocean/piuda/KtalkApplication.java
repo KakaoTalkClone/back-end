@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PiudaApplication {
+public class KtalkApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PiudaApplication.class, args);
+		SpringApplication.run(KtalkApplication.class, args);
 	}
 
 }
