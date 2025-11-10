@@ -70,7 +70,7 @@ jobs:
       - name: Set up application-prod.properties
         run: |
           #  resources 디렉토리 생성 (존재하지 않는 경우)
-          mkdir -p ./src/main/resources
+          mkdir -p ./src/main/resources/
           echo '${{ env.APPLICATION_PROD }}' > ./src/main/resources/application.properties
 
       - name: Set up Firebase key
