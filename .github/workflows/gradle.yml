@@ -68,7 +68,7 @@ jobs:
       # .yml 파일은 보안상 리포지토리에 노출 할 수가 없음
       # 따라서, 깃허브의 secrets에 application.yml 선언 후, 이를 가져옴
       - name: Set up application-prod.properties
-        run: echo "${{ env.APPLICATION_PROD }}" > ./src/main/resources/application.properties
+        run: echo '${{ env.APPLICATION_PROD }}' > ./src/main/resources/application.properties
 
       - name: Set up Firebase key
         run: |
