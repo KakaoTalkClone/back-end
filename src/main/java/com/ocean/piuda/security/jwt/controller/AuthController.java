@@ -44,8 +44,8 @@ public class AuthController {
             HttpServletResponse response
     ) {
         TokenResponseDto dto = authService.usernameLogin(request); // 서비스는 토큰만 생성/검증
-        ResponseCookie cookie = tokenCookieFactory.buildAccessTokenCookie(dto.getAccess());
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+//        ResponseCookie cookie = tokenCookieFactory.buildAccessTokenCookie(dto.getAccess());
+//        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ApiData.ok(dto);
     }
 

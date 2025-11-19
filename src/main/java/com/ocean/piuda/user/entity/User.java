@@ -2,7 +2,9 @@ package com.ocean.piuda.user.entity;
 
 
 
+import com.ocean.piuda.device.enums.DevicePlatform;
 import com.ocean.piuda.global.api.domain.BaseEntity;
+import com.ocean.piuda.chat.entity.Message;
 import com.ocean.piuda.security.jwt.dto.request.UserUpdateRequestDto;
 import com.ocean.piuda.security.jwt.enums.Role;
 import com.ocean.piuda.security.oauth2.enums.ProviderType;
@@ -11,6 +13,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 
 @Table(name = "users")
@@ -69,9 +73,17 @@ public class User extends BaseEntity {
     private String email;
     private String phone;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "device_platform")
+    private DevicePlatform devicePlatform = DevicePlatform.ANDROID;
 
 
+    @OneToMany(mappedBy = "user")
+    private List<RoomUser> roomUsers;
 
+    @OneToMany(mappedBy = "sender")
+    private List<Message> messages;
 
 
     public void updateRole(Role role){
