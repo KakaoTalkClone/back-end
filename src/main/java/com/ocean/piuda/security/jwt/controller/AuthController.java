@@ -40,8 +40,8 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "로그인 요청 바디", required = true
             )
-            @RequestBody UsernameLoginRequestDto request,
-            HttpServletResponse response
+            @RequestBody UsernameLoginRequestDto request
+//            HttpServletResponse response
     ) {
         TokenResponseDto dto = authService.usernameLogin(request); // 서비스는 토큰만 생성/검증
 //        ResponseCookie cookie = tokenCookieFactory.buildAccessTokenCookie(dto.getAccess());
