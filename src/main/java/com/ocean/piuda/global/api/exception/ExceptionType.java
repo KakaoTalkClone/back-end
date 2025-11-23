@@ -40,7 +40,14 @@ public enum ExceptionType {
 
 
     //store
-    STORE_NOT_FOUND(NOT_FOUND, "S001", "존재하지 않는 가게")
+    STORE_NOT_FOUND(NOT_FOUND, "S001", "존재하지 않는 가게"),
+
+
+
+    //friend
+    ALREADY_FRIEND(NOT_ACCEPTABLE, "F001", "이미 친구로 등록된 사용자"),
+    FRIEND_NOT_FOUND(NOT_FOUND, "F002", "존재하지 않는 친구");
+
 
     ;
 
