@@ -30,6 +30,8 @@ public class FriendController {
                 new FriendResponse(1L, "https://example.com/image1.jpg", "홍길동", "안녕하세요!"),
                 new FriendResponse(2L, "https://example.com/image2.jpg", "김철수", "헬스 중")
         );
+
+
         return ApiData.ok(dummy);
     }
 

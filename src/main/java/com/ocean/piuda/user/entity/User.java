@@ -73,6 +73,7 @@ public class User extends BaseEntity {
     private String email;
     private String phone;
 
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "device_platform")

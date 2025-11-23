@@ -2,6 +2,8 @@ package com.ocean.piuda.user.service;
 
 import com.ocean.piuda.global.api.exception.BusinessException;
 import com.ocean.piuda.global.api.exception.ExceptionType;
+import com.ocean.piuda.user.condition.UserListCondition;
+import com.ocean.piuda.user.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +33,7 @@ public class UserQueryService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ExceptionType.USER_NOT_FOUND));
     }
+
 
 
 
@@ -84,10 +87,9 @@ public class UserQueryService {
     }
 
 
+    public Page<UserResponse> findUserFrom(UserListCondition condition) {
+        Pageable pageable = PageRequest.of(condition.getPage() - 1, condition.getSize());
 
-
-
-
-
-
+        return userRepository.findUserResponseByCondition(condition.getUsername(), pageable);
+    }
 }

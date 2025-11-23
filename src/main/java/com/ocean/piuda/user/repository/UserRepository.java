@@ -2,6 +2,7 @@ package com.ocean.piuda.user.repository;
 
 
 import com.ocean.piuda.security.oauth2.enums.ProviderType;
+import com.ocean.piuda.user.dto.response.UserResponse;
 import com.ocean.piuda.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -68,5 +69,17 @@ public interface UserRepository extends JpaRepository<User , Long> {
 
 
 
-
+    @Query("""
+        select new com.ocean.piuda.user.dto.response.UserResponse(
+            u.id,
+            u.nickname,
+            u.phone
+        )
+        from User u
+        where (:username is null or u.username like %:username%)
+    """)
+    Page<UserResponse> findUserResponseByCondition(
+            @Param("username") String username,
+            Pageable pageable
+    );
 }
