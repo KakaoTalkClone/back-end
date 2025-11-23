@@ -1,6 +1,6 @@
 package com.ocean.piuda.image.enums;
 
-public enum MemberImageType {
+public enum UserImageType {
 
     PROFILE, BACKGROUND
 }

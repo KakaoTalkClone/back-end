@@ -1,7 +1,7 @@
 package com.ocean.piuda.image.entity;
 
 import com.ocean.piuda.global.api.domain.BaseEntity;
-import com.ocean.piuda.image.enums.MemberImageType;
+import com.ocean.piuda.image.enums.UserImageType;
 import com.ocean.piuda.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,6 +38,6 @@ public class UserImage extends BaseEntity {
 
     @Column(name = "type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    private MemberImageType type;
+    private UserImageType type;
 
 }

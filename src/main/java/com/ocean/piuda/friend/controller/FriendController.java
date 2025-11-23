@@ -5,10 +5,17 @@ import com.ocean.piuda.friend.dto.request.FriendPhoneRequest;
 import com.ocean.piuda.friend.dto.request.FriendUsernameRequest;
 import com.ocean.piuda.friend.dto.response.FriendDetailResponse;
 import com.ocean.piuda.friend.dto.response.FriendResponse;
+import com.ocean.piuda.friend.service.FriendService;
 import com.ocean.piuda.global.api.dto.ApiData;
+import com.ocean.piuda.global.api.dto.PageResponse;
+import com.ocean.piuda.global.util.SecurityUtil;
+import com.ocean.piuda.user.service.UserCommandService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,49 +26,44 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FriendController {
 
+    private final FriendService friendService;
+    private final SecurityUtil securityUtil;
 
     @GetMapping("")
     @Operation(summary = "친구 목록 조회", description = "size, page를 통해 친구 목록을 조회합니다.")
-    public ApiData<List<FriendResponse>> getFriendList(
-            @RequestParam(defaultValue = "0") int page,
+    public ApiData<PageResponse<FriendResponse>> getFriendList(
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        List<FriendResponse> dummy = List.of(
-                new FriendResponse(1L, "https://example.com/image1.jpg", "홍길동", "안녕하세요!"),
-                new FriendResponse(2L, "https://example.com/image2.jpg", "김철수", "헬스 중")
-        );
 
+        Pageable pageable = PageRequest.of(page - 1, size);
 
-        return ApiData.ok(dummy);
+        Page<FriendResponse> response = friendService.findFriendFrom(securityUtil.getUserId(), pageable);
+
+        return ApiData.ok(PageResponse.of(response));
     }
 
     @PostMapping("/phone")
     @Operation(summary = "연락처로 친구 추가", description = "닉네임과 전화번호로 친구를 추가합니다.")
-    public ApiData<Void> addFriendByPhone(@RequestBody FriendPhoneRequest request) {
-        // TODO: 실제 서비스 로직 연결
-        return ApiData.ok(null);
+    public ApiData<String> addFriendByPhone(@RequestBody FriendPhoneRequest request) {
+        friendService.addFriendFrom(securityUtil.getUserId(), request);
+        return ApiData.ok("ok");
     }
 
     @PostMapping("/username")
     @Operation(summary = "카카오톡 ID로 친구 추가", description = "username으로 친구를 추가합니다.")
-    public ApiData<Void> addFriendByUsername(@RequestBody FriendUsernameRequest request) {
-        // TODO: 실제 서비스 로직 연결
-        return ApiData.ok(null);
+    public ApiData<String> addFriendByUsername(@RequestBody FriendUsernameRequest request) {
+        friendService.addFriendFrom(securityUtil.getUserId(), request);
+        return ApiData.ok("ok");
     }
 
     @GetMapping("/{userId}")
     @Operation(summary = "친구 프로필 조회", description = "userId로 친구 프로필을 조회합니다.")
     public ApiData<FriendDetailResponse> getFriendProfile(@PathVariable Long userId) {
-        FriendDetailResponse dummy = new FriendDetailResponse(
-                "https://example.com/image.jpg",
-                List.of(
-                        "https://example.com/bg1.jpg",
-                        "https://example.com/bg2.jpg"
-                ),
-                "홍길동",
-                "오늘도 운동 중"
-        );
-        return ApiData.ok(dummy);
+
+        FriendDetailResponse resposne = friendService.findFriendDetail(securityUtil.getUserId(), userId);
+
+        return ApiData.ok(resposne);
     }
 
 }

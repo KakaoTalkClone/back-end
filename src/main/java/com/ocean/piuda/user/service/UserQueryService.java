@@ -15,6 +15,8 @@ import com.ocean.piuda.user.dto.response.DetailedUserResponse;
 import com.ocean.piuda.user.entity.User;
 import com.ocean.piuda.user.repository.UserRepository;
 
+import java.util.Optional;
+
 
 @RequiredArgsConstructor
 @Service
@@ -87,9 +89,20 @@ public class UserQueryService {
     }
 
 
-    public Page<UserResponse> findUserFrom(UserListCondition condition) {
+    public Page<UserResponse> findUserFromPhone(UserListCondition condition) {
         Pageable pageable = PageRequest.of(condition.getPage() - 1, condition.getSize());
 
         return userRepository.findUserResponseByCondition(condition.getUsername(), pageable);
     }
+
+    public Optional<User> findUserFromPhone(String phone) {
+        return userRepository.findByPhone(phone);
+    }
+
+    public Optional<User> findUserFromUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+
+
 }

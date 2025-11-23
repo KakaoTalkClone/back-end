@@ -1,6 +1,5 @@
 package com.ocean.piuda.user.controller;
 
-import com.ocean.piuda.friend.controller.FriendController;
 import com.ocean.piuda.global.api.dto.ApiData;
 import com.ocean.piuda.global.api.dto.PageResponse;
 import com.ocean.piuda.security.jwt.dto.request.UserUpdateRequestDto;
@@ -18,10 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -75,7 +71,7 @@ public class UserController {
             UserListCondition condition
     ) {
 
-        Page<UserResponse> response = userQueryService.findUserFrom(condition);
+        Page<UserResponse> response = userQueryService.findUserFromPhone(condition);
 
         return ApiData.ok(PageResponse.of(response));
     }

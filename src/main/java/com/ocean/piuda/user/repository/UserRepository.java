@@ -82,4 +82,6 @@ public interface UserRepository extends JpaRepository<User , Long> {
             @Param("username") String username,
             Pageable pageable
     );
+
+    Optional<User> findByPhone(String phone);
 }
