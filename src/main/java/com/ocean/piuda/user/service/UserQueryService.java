@@ -2,7 +2,9 @@ package com.ocean.piuda.user.service;
 
 import com.ocean.piuda.global.api.exception.BusinessException;
 import com.ocean.piuda.global.api.exception.ExceptionType;
+import com.ocean.piuda.image.service.ImageService;
 import com.ocean.piuda.user.condition.UserListCondition;
+import com.ocean.piuda.user.dto.response.UserDetailResponse;
 import com.ocean.piuda.user.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,6 +17,7 @@ import com.ocean.piuda.user.dto.response.DetailedUserResponse;
 import com.ocean.piuda.user.entity.User;
 import com.ocean.piuda.user.repository.UserRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -25,6 +28,7 @@ public class UserQueryService {
 
     private final UserRepository userRepository;
     private final UserAggregateBuilder aggregateBuilder;
+    private final ImageService imageService;
 
 
     /**
@@ -77,7 +81,16 @@ public class UserQueryService {
         return page.map(aggregateBuilder::build);
     }
 
+    public UserDetailResponse findUserDetail(Long userId) {
+        UserDetailResponse response = userRepository.findUserDetailByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ExceptionType.USER_NOT_FOUND));
 
+        List<String> backgroundImageUrls = imageService.findBackgroundImages(userId);
+
+        response.setBackgroundImageUrls(backgroundImageUrls);
+
+        return response;
+    }
 
     /**
      * 불리언 모드 특수문자로 인한 파싱 오류를 줄이기 위한 간단 정규화
@@ -102,7 +115,6 @@ public class UserQueryService {
     public Optional<User> findUserFromUsername(String username) {
         return userRepository.findByUsername(username);
     }
-
 
 
 }
