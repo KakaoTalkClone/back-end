@@ -3,7 +3,6 @@ package com.ocean.piuda.friend.service;
 
 import com.ocean.piuda.friend.dto.request.FriendPhoneRequest;
 import com.ocean.piuda.friend.dto.request.FriendUsernameRequest;
-import com.ocean.piuda.friend.dto.response.FriendDetailResponse;
 import com.ocean.piuda.friend.dto.response.FriendResponse;
 import com.ocean.piuda.friend.entity.Friend;
 import com.ocean.piuda.friend.repository.FriendRepository;
@@ -28,7 +27,6 @@ public class FriendService {
 
     private final FriendRepository friendRepository;
     private final UserQueryService userQueryService;
-    private final ImageService imageService;
 
 
     @Transactional
@@ -42,8 +40,7 @@ public class FriendService {
 
          Friend friend = Friend.of(
              findMeUser,
-             findFriendTargetUser,
-             request.getNickname()
+             findFriendTargetUser
          );
 
          return friendRepository.save(friend);
@@ -60,8 +57,7 @@ public class FriendService {
 
         Friend friend = Friend.of(
                 findMeUser,
-                findFriendTargetUser,
-                findFriendTargetUser.getNickname()
+                findFriendTargetUser
         );
 
         return friendRepository.save(friend);
@@ -75,16 +71,6 @@ public class FriendService {
         return friendRepository.findByUserIdAndFriendUserId(userId, friendUserId);
     }
 
-    public FriendDetailResponse findFriendDetail(Long meUserId, Long targetUserId) {
-        FriendDetailResponse response = friendRepository.findFriendDetail(meUserId, targetUserId)
-                .orElseThrow(() -> new BusinessException(ExceptionType.FRIEND_NOT_FOUND));
-
-        List<String> backgroundImageUrls = imageService.findBackgroundImages(targetUserId);
-
-        response.setBackgroundImageUrls(backgroundImageUrls);
-
-        return response;
-    }
 
     private void validateExistsFriend(Long userId, User findUser) {
         findFriendFrom(userId, findUser.getId())

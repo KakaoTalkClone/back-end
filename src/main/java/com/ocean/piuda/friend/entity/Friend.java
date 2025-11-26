@@ -45,15 +45,12 @@ public class Friend extends BaseEntity {
     @Column(nullable = false)
     private FriendStatus status = FriendStatus.ACTIVE;
 
-    @Column(length = 255)
-    private String nickname;
 
-    public static Friend of(User user, User friendUser, String nickname) {
+    public static Friend of(User user, User friendUser) {
         return Friend.builder()
                 .user(user)
                 .friendUser(friendUser)
                 .status(FriendStatus.ACTIVE)
-                .nickname(nickname)
                 .build();
     }
 

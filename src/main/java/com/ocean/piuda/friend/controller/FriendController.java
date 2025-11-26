@@ -3,7 +3,6 @@ package com.ocean.piuda.friend.controller;
 
 import com.ocean.piuda.friend.dto.request.FriendPhoneRequest;
 import com.ocean.piuda.friend.dto.request.FriendUsernameRequest;
-import com.ocean.piuda.friend.dto.response.FriendDetailResponse;
 import com.ocean.piuda.friend.dto.response.FriendResponse;
 import com.ocean.piuda.friend.service.FriendService;
 import com.ocean.piuda.global.api.dto.ApiData;
@@ -57,13 +56,5 @@ public class FriendController {
         return ApiData.ok("ok");
     }
 
-    @GetMapping("/{userId}")
-    @Operation(summary = "친구 프로필 조회", description = "userId로 친구 프로필을 조회합니다.")
-    public ApiData<FriendDetailResponse> getFriendProfile(@PathVariable Long userId) {
-
-        FriendDetailResponse resposne = friendService.findFriendDetail(securityUtil.getUserId(), userId);
-
-        return ApiData.ok(resposne);
-    }
 
 }

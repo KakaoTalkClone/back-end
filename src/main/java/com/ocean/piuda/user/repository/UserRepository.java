@@ -2,6 +2,7 @@ package com.ocean.piuda.user.repository;
 
 
 import com.ocean.piuda.security.oauth2.enums.ProviderType;
+import com.ocean.piuda.user.dto.response.UserDetailResponse;
 import com.ocean.piuda.user.dto.response.UserResponse;
 import com.ocean.piuda.user.entity.User;
 import org.springframework.data.domain.Page;
@@ -84,4 +85,22 @@ public interface UserRepository extends JpaRepository<User , Long> {
     );
 
     Optional<User> findByPhone(String phone);
+
+
+    @Query("""
+
+    select new com.ocean.piuda.user.dto.response.UserDetailResponse(
+         i.url,
+         null,
+         u.nickname,
+         u.statusMessage
+     )
+     from User u
+     left join UserImage ui on ui.user = u and ui.type = com.ocean.piuda.image.enums.UserImageType.PROFILE
+     left join Image i on i.id = ui.image.id
+     where u.id = :userId
+    """)
+    Optional<UserDetailResponse> findUserDetailByUserId(
+            @Param("userId") Long userId
+    );
 }

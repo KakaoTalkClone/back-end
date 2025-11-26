@@ -2,11 +2,13 @@ package com.ocean.piuda.user.controller;
 
 import com.ocean.piuda.global.api.dto.ApiData;
 import com.ocean.piuda.global.api.dto.PageResponse;
+import com.ocean.piuda.global.util.SecurityUtil;
 import com.ocean.piuda.security.jwt.dto.request.UserUpdateRequestDto;
 import com.ocean.piuda.security.jwt.service.TokenUserService;
 import com.ocean.piuda.user.condition.UserListCondition;
 import com.ocean.piuda.user.dto.request.UserSearchRequest;
 import com.ocean.piuda.user.dto.response.DetailedUserResponse;
+import com.ocean.piuda.user.dto.response.UserDetailResponse;
 import com.ocean.piuda.user.dto.response.UserResponse;
 import com.ocean.piuda.user.service.UserAggregateBuilder;
 import com.ocean.piuda.user.service.UserCommandService;
@@ -29,6 +31,16 @@ public class UserController {
     private final UserQueryService userQueryService;
     private final TokenUserService tokenUserService;
     private final UserAggregateBuilder aggregateBuilder;
+    private final SecurityUtil securityUtil;
+
+    @GetMapping("/{userId}")
+    @Operation(summary = "회원 프로필 조회", description = "userId로 해당 회원 프로필을 조회합니다.")
+    public ApiData<UserDetailResponse> getFriendProfile(@PathVariable Long userId) {
+
+        UserDetailResponse resposne = userQueryService.findUserDetail(userId);
+
+        return ApiData.ok(resposne);
+    }
 
     @PatchMapping("/{userId}")
     @Operation(summary = "유저 정보 수정", description = "특정 유저의 닉네임, 이메일, 전화번호 등 기본 정보를 수정합니다.")
