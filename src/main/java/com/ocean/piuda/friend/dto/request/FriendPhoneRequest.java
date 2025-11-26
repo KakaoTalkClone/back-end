@@ -9,6 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FriendPhoneRequest {
-    private String nickname;
     private String phone;
 }

@@ -1,11 +1,14 @@
 package com.ocean.piuda.user.controller;
 
-import com.ocean.piuda.friend.controller.FriendController;
 import com.ocean.piuda.global.api.dto.ApiData;
+import com.ocean.piuda.global.api.dto.PageResponse;
+import com.ocean.piuda.global.util.SecurityUtil;
 import com.ocean.piuda.security.jwt.dto.request.UserUpdateRequestDto;
 import com.ocean.piuda.security.jwt.service.TokenUserService;
+import com.ocean.piuda.user.condition.UserListCondition;
 import com.ocean.piuda.user.dto.request.UserSearchRequest;
 import com.ocean.piuda.user.dto.response.DetailedUserResponse;
+import com.ocean.piuda.user.dto.response.UserDetailResponse;
 import com.ocean.piuda.user.dto.response.UserResponse;
 import com.ocean.piuda.user.service.UserAggregateBuilder;
 import com.ocean.piuda.user.service.UserCommandService;
@@ -14,11 +17,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -30,6 +31,16 @@ public class UserController {
     private final UserQueryService userQueryService;
     private final TokenUserService tokenUserService;
     private final UserAggregateBuilder aggregateBuilder;
+    private final SecurityUtil securityUtil;
+
+    @GetMapping("/{userId}")
+    @Operation(summary = "회원 프로필 조회", description = "userId로 해당 회원 프로필을 조회합니다.")
+    public ApiData<UserDetailResponse> getFriendProfile(@PathVariable Long userId) {
+
+        UserDetailResponse resposne = userQueryService.findUserDetail(userId);
+
+        return ApiData.ok(resposne);
+    }
 
     @PatchMapping("/{userId}")
     @Operation(summary = "유저 정보 수정", description = "특정 유저의 닉네임, 이메일, 전화번호 등 기본 정보를 수정합니다.")
@@ -67,16 +78,14 @@ public class UserController {
 
     @GetMapping("")
     @Operation(summary = "회원 조회", description = "카카오톡 ID로 추가 -> username으로 해당 회원 조회. 추천친구 -> username비우고 page, size로 각 회원들 조회")
-    public ApiData<List<UserResponse>> searchUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String username
+    public ApiData<PageResponse<UserResponse>> searchUsers(
+            @ParameterObject
+            UserListCondition condition
     ) {
-        List<UserResponse> dummyList = List.of(
-                new UserResponse(1L, "홍길동", "010-1234-5678"),
-                new UserResponse(2L, "김철수", "010-9876-5432")
-        );
-        return ApiData.ok(dummyList);
+
+        Page<UserResponse> response = userQueryService.findUserFromPhone(condition);
+
+        return ApiData.ok(PageResponse.of(response));
     }
 
 }

@@ -72,6 +72,9 @@ public class User extends BaseEntity {
     private String nickname;
     private String email;
     private String phone;
+    // 상태 메시지
+    private String statusMessage;
+
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
