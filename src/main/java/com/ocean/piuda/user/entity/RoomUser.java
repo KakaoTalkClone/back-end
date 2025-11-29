@@ -1,8 +1,8 @@
 package com.ocean.piuda.user.entity;
 
+import com.ocean.piuda.chatRoom.entity.ChatRoom;
 import com.ocean.piuda.global.api.domain.BaseEntity;
 import com.ocean.piuda.chat.entity.Message;
-import com.ocean.piuda.chatRoom.entity.Room;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 
 /**
@@ -31,7 +30,7 @@ public class RoomUser extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
-    private Room room;
+    private ChatRoom chatRoom;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -52,7 +51,8 @@ public class RoomUser extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
+    public void markAsRead(Message lastReadMessage) {
+        this.lastReadMessage = lastReadMessage;
+    }
 
-
-    // getters, setters, constructors
 }
