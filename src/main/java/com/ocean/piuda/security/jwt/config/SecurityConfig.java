@@ -51,6 +51,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/sign-up").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/auth/complete-sign-up/**").hasAuthority(Role.NOT_REGISTERED.getKey())
                         .requestMatchers("/api/friend/**").hasAuthority(Role.USER.getKey())
 

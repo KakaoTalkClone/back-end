@@ -1,7 +1,7 @@
 package com.ocean.piuda.chatRoom.enums;
 
 
-public enum RoomState {
+public enum ChatRoomState {
     ACTIVE, ARCHIVED, DELETED
 }
 

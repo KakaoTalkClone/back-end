@@ -1,5 +1,5 @@
 package com.ocean.piuda.chatRoom.enums;
 
-public enum RoomType {
+public enum ChatRoomType {
     DIRECT, GROUP
 }

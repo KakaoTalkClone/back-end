@@ -1,7 +1,7 @@
 package com.ocean.piuda.chat.entity;
 
+import com.ocean.piuda.chatRoom.entity.ChatRoom;
 import com.ocean.piuda.global.api.domain.BaseEntity;
-import com.ocean.piuda.chatRoom.entity.Room;
 import com.ocean.piuda.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -41,7 +41,7 @@ public class DirectChat extends BaseEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false, unique = true)
-    private Room room;
+    private ChatRoom chatRoom;
 
     /**
      * 주의 :
@@ -50,14 +50,14 @@ public class DirectChat extends BaseEntity {
      * unique 조건을 만족시켜야된다.
      * 이를 위해 이 엔티티에 정의한 of 를 활용한 생성 수행 권장.
      */
-    public static DirectChat of(User u1, User u2, Room room) {
+    public static DirectChat of(User u1, User u2, ChatRoom chatRoom) {
         User min = u1.getId() < u2.getId() ? u1 : u2;
         User max = u1.getId() < u2.getId() ? u2 : u1;
 
         return DirectChat.builder()
                 .userA(min)
                 .userB(max)
-                .room(room)
+                .chatRoom(chatRoom)
                 .build();
     }
 

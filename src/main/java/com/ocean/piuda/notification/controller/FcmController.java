@@ -4,11 +4,14 @@ import com.ocean.piuda.notification.dto.request.SaveTokenRequest;
 import com.ocean.piuda.notification.dto.request.SendNotificationRequest;
 import com.ocean.piuda.notification.dto.response.SendResultResponse;
 import com.ocean.piuda.notification.service.FcmCommandService;
+import com.ocean.piuda.security.jwt.service.TokenUserService;
+import com.ocean.piuda.security.oauth2.principal.PrincipalDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Push/FCM API", description = "웹푸시(FCM) 관련 API")
@@ -18,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 public class FcmController {
 
     private final FcmCommandService fcmCommandService;
+    private final TokenUserService tokenUserService;
+
 
     /** 토큰 저장/갱신 (로그인 유저 기준) */
     @PostMapping("/tokens")
@@ -26,22 +31,11 @@ public class FcmController {
             description = "현재 로그인한 사용자 기준으로 FCM/WebPush 토큰을 저장하거나 갱신합니다."
     )
     @SecurityRequirement(name = "bearerAuth")
-    public void upsertToken(
-            // TODO: 추후 @AuthenticationPrincipal(expression = "id") 로 교체 예정
-            @Parameter(hidden = true) Long userId,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "저장/갱신할 토큰 정보", required = true
-            )
-            @RequestBody SaveTokenRequest req
-    ) {
-
-            /*
-             임시 처리 코드
-            Long userId = 1L;
-             */
-
-            fcmCommandService.upsert(userId, req);
+    public void upsertToken(@RequestBody SaveTokenRequest req) {
+        Long userId = tokenUserService.getCurrentUser().getId();
+        fcmCommandService.upsert(userId, req);
     }
+
 
     /** 토큰 삭제 */
     @DeleteMapping("/tokens/{token}")
