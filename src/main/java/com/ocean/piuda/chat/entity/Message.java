@@ -1,8 +1,8 @@
 package com.ocean.piuda.chat.entity;
 
+import com.ocean.piuda.chatRoom.entity.ChatRoom;
 import com.ocean.piuda.global.api.domain.BaseEntity;
 import com.ocean.piuda.chat.enums.ContentType;
-import com.ocean.piuda.chatRoom.entity.Room;
 import com.ocean.piuda.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -25,7 +25,7 @@ public class Message extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
-    private Room room;
+    private ChatRoom chatRoom;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)

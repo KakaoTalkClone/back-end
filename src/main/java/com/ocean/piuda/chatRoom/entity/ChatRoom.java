@@ -1,17 +1,25 @@
 package com.ocean.piuda.chatRoom.entity;
 
+import com.ocean.piuda.chatRoom.enums.ChatRoomType;
 import com.ocean.piuda.global.api.domain.BaseEntity;
 import com.ocean.piuda.user.entity.RoomUser;
 import com.ocean.piuda.chat.entity.Message;
-import com.ocean.piuda.chatRoom.enums.RoomState;
-import com.ocean.piuda.chatRoom.enums.RoomType;
+import com.ocean.piuda.chatRoom.enums.ChatRoomState;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "room")
-public class Room extends BaseEntity {
+public class ChatRoom extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,16 +35,20 @@ public class Room extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "room_type", nullable = false)
-    private RoomType roomType;
+    private ChatRoomType chatRoomType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "room_state", nullable = false)
-    private RoomState roomState = RoomState.ACTIVE;
+    @Builder.Default
+    private ChatRoomState chatRoomState = ChatRoomState.ACTIVE;   // 기본값
 
-
-    @OneToMany(mappedBy = "room")
+    @OneToMany(mappedBy = "chatRoom")
     private List<Message> messages;
 
-    @OneToMany(mappedBy = "room")
+    @OneToMany(mappedBy = "chatRoom")
     private List<RoomUser> participants;
+
+    public void updateLastMessage(Message message) {
+        this.lastMessage = message;
+    }
 }
