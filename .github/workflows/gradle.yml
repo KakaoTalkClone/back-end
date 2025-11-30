@@ -1,14 +1,9 @@
-#해당 파일 이름(의미X)
-name: opensource-be-CI/CD
+name: Ktalk-Backend-CI/CD
 
-#on : 어떤 경우에 깃허브 액션을 실행할지 정함
-#(아래는 push 발생 시, 깃허브 액션을 수행. 즉, 아래 명령어들 실행)
 on:
   push:
     branches: [ "develop" ]
 
-# env : 변수 선언
-# ex) DOCKER_IMAGE_NAME = testimage
 env:
   SERVER_HOST: ${{ secrets.SERVER_HOST }}
   SERVER_HOST_NAME : ubuntu
@@ -21,95 +16,76 @@ env:
   DOCKER_CONTAINER_NAME: backend
 
   APPLICATION_PROD: ${{ secrets.APPLICATION_PROD }}
-
   FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
 
   FULL_GITHUB_SHA: ${{ github.sha }}
   SHORT_GITHUB_SHA: 0
 
-
-# jobs : 수행할 명령어
-# jobs를 여러개 써도 됨
-# (하지만 각 jobs는 독립적으로 수행되므로, Ajobs의 진행 상황이 Bjobs에는 반영 안됨)
 jobs:
-  # jobs 이름
   build-and-push-docker:
-    # 해당 jobs의 실행환경
-    # (현재는 ubuntu 환경에서 실행할 것임)
     runs-on: ubuntu-latest
-    # jobs는 여러개의 step으로 구성됨
-    # 각각의 step에서 명령어를 넣으면 됨
     steps:
-
-      # 해당 step의 이름(Checkout)
       - name: Checkout
-        # 현재 리포지토리 코드 가져오기
         uses: actions/checkout@v4
 
-      # FULL_GITHUB_SHA의 7글자만 SHORT_GITHUB_SHA에 첨가
       - name: Set SHORT_GITHUB_SHA
         run: echo "SHORT_GITHUB_SHA=${FULL_GITHUB_SHA::7}" >> $GITHUB_ENV
-      # template로 실제 docker-compose.yml 생성
+
+      # docker-compose.yml 파일 생성 (환경변수 치환)
       - name: Generate docker-compose.yml from template
         run: envsubst < docker-compose.yml.template > docker-compose.yml
         env:
           DOCKER_NAME: ${{ env.DOCKER_NAME }}
           DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
+          DOCKER_IMAGE_VERSION: ${{ env.DOCKER_IMAGE_VERSION }}
           DOCKER_CONTAINER_NAME: ${{ env.DOCKER_CONTAINER_NAME }}
 
-      # 자바 JDK 설치
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 해당 Spring의 application.yml 파일 넣기
-      # .yml 파일은 보안상 리포지토리에 노출 할 수가 없음
-      # 따라서, 깃허브의 secrets에 application.yml 선언 후, 이를 가져옴
       - name: Set up application-prod.properties
         run: |
-          #  resources 디렉토리 생성 (존재하지 않는 경우)
           mkdir -p ./src/main/resources/
           echo '${{ env.APPLICATION_PROD }}' > ./src/main/resources/application.properties
 
       - name: Set up Firebase key
         run: |
-          # firebase 디렉토리 생성 (존재하지 않는 경우)
           mkdir -p ./src/main/resources/firebase/
-          # Firebase key 파일 생성
           echo '${{ env.FIREBASE_KEY }}' > ./src/main/resources/firebase/service-account.json
-          # 파일이 올바르게 생성되었는지 확인
-          ls -la ./src/main/resources/firebase/
 
-      # 해당 프로젝트의 gradlew 파일 실행 권한 획득.
       - name: Grant execute permission for gradlew
-        run: sudo chmod +x ./gradlew  # gradlew에 실행 권한 부여
+        run: sudo chmod +x ./gradlew
 
-      # gradlew 파일 실행
-      # .jar 파일을 만듦(아래에서 추가 설명)
       - name: Build with Gradle (Run tests)
         run: ./gradlew build
 
-      # 해당 프로젝트를 도커 이미지로 만듦
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_VERSION }}
 
-      # 도커 허브에 접속
       - name: Login to Docker Hub using Access Token
         run: echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_NAME" --password-stdin
 
-      # 도커 허브에 해당 도커 이미지 저장
       - name: Push the Docker image
         run: |
           docker image tag ${{ env.DOCKER_IMAGE_NAME }} ${{ env.DOCKER_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_VERSION }}
           docker image tag ${{ env.DOCKER_IMAGE_NAME }} ${{ env.DOCKER_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.SHORT_GITHUB_SHA }}
           docker push ${{ env.DOCKER_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_VERSION }}
           docker push ${{ env.DOCKER_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.SHORT_GITHUB_SHA }}
-      # 1. 서버 접속
-      # 2. 이미 실행중인 해당 프로젝트의 도커 컨테이너와 이미지 삭제
-      # 3. 도커 허브에서 저장한 이미지 가져옴
-      # 4. 이미지를 컨테이너로 만들어서 실행
+
+      # 생성된 docker-compose.yml을 EC2로 전송
+      - name: Copy docker-compose.yml to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_HOST_NAME }}
+          key: ${{ env.SERVER_SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml"
+          target: "/home/${{ env.SERVER_HOST_NAME }}/"
+
+      # docker compose (V2) 명령어로 배포
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
@@ -117,18 +93,14 @@ jobs:
           username: ${{ env.SERVER_HOST_NAME }}
           key: ${{ env.SERVER_SSH_PRIVATE_KEY }}
           script: |
-            # 호스트명이 backend인 컨테이너 중지(해당 프로젝트의 호스트명임)
-            sudo docker ps --filter "name=${{ env.DOCKER_CONTAINER_NAME }}" --format "{{.Names}}" | xargs -r sudo docker stop
-            # 중지된 컨테이너들 전부 삭제
-            sudo docker ps --filter 'status=exited' -a -q | xargs -r sudo docker rm
-            # 해당 프로젝트 이름을 가진 이미지 전부 삭제
-            sudo docker images --filter=reference="${{ env.DOCKER_NAME }}/${{ env.DOCKER_IMAGE_NAME }}*" -q | xargs -r sudo docker rmi
-            # 도커 허브 접속
-            sudo docker login -u ${{ env.DOCKER_NAME }} -p ${{ env.DOCKER_HUB_TOKEN }}
-            # 도커 허브에 있는 내 이미지(실행할 프로젝트) 가져오기
-            sudo docker pull ${{ env.DOCKER_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_VERSION }}
-            # 가져온 내 이미지 실행.
-            sudo docker run -d \
-              --name ${{ env.DOCKER_CONTAINER_NAME }} \
-              -p 8080:8080 \
-              ${{ env.DOCKER_NAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_VERSION }}
+            # 1. Docker Hub 로그인
+            echo "${{ env.DOCKER_HUB_TOKEN }}" | sudo docker login -u ${{ env.DOCKER_NAME }} --password-stdin
+            
+            # 2. 최신 이미지 Pull (docker-compose.yml은 이미 scp로 전송됨)
+            sudo docker compose pull
+            
+            # 3. 컨테이너 실행 (변경된 컨테이너만 재시작)
+            sudo docker compose up -d
+            
+            # 4. 불필요한 이미지 정리
+            sudo docker image prune -f
