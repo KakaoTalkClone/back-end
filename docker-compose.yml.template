@@ -1,9 +1,41 @@
-version: "3.8"
+version: '3.8'
 
 services:
+  # 1. RabbitMQ 서비스
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    # STOMP & Management 플러그인 활성화 상태로 시작
+    command: /bin/sh -c "rabbitmq-plugins enable --offline rabbitmq_stomp rabbitmq_management && rabbitmq-server"
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+      - "61613:61613" # STOMP
+    volumes:
+      - ./rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - ktalk-net
+    restart: always
+
+  # 2. Ktalk 백엔드 서비스
   backend:
-    image: ${DOCKER_NAME}/${DOCKER_IMAGE_NAME}:latest
+    image: ${DOCKER_NAME}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_VERSION}
     container_name: ${DOCKER_CONTAINER_NAME}
     ports:
       - "8080:8080"
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      STOMP_RELAY_HOST: rabbitmq
+      TZ: Asia/Seoul
+    depends_on:
+      - rabbitmq
+    networks:
+      - ktalk-net
     restart: always
+
+networks:
+  ktalk-net:
+    driver: bridge
