@@ -19,7 +19,7 @@ public interface RoomUserRepository extends JpaRepository<RoomUser, Long> {
 
     Optional<RoomUser> findByChatRoomRoomIdAndUserId(Long roomId, Long userId);
 
-    // [추가됨] 해당 방의 모든 참여자 조회 (채팅방 목록 갱신 알림용)
+    // 해당 방의 모든 참여자 조회 (채팅방 목록 갱신 알림용)
     List<RoomUser> findByChatRoomRoomId(Long roomId);
 
     @Query("""
@@ -35,14 +35,14 @@ public interface RoomUserRepository extends JpaRepository<RoomUser, Long> {
             @Param("messageId") Long messageId
     );
 
-    /**
-     * [N+1 문제 해결]
-     * 내 채팅방 목록 + 마지막 메시지 + 안 읽은 개수를 '한 번의 쿼리'로 조회
-     */
     @Query("""
         SELECT new com.ocean.piuda.chatRoom.dto.response.ChatRoomListItemResponse(
             r.roomId,
-            r.roomName,
+            CASE 
+                WHEN r.chatRoomType = com.ocean.piuda.chatRoom.enums.ChatRoomType.DIRECT 
+                THEN COALESCE(otherU.nickname, '알 수 없는 사용자')
+                ELSE r.roomName 
+            END,
             r.chatRoomType,
             lm.content,
             lm.createdAt,
@@ -51,13 +51,30 @@ public interface RoomUserRepository extends JpaRepository<RoomUser, Long> {
                 FROM Message m
                 WHERE m.chatRoom.roomId = r.roomId
                   AND m.messageId > COALESCE(ru.lastReadMessage.messageId, 0)
+            ),
+            (
+                SELECT i.url
+                FROM UserImage ui
+                JOIN ui.image i
+                WHERE ui.type = com.ocean.piuda.image.enums.UserImageType.PROFILE
+                  AND ui.user.id = (
+                      CASE 
+                          WHEN r.chatRoomType = com.ocean.piuda.chatRoom.enums.ChatRoomType.DIRECT 
+                          THEN otherU.id 
+                          ELSE lm.sender.id 
+                      END
+                  )
             )
         )
         FROM RoomUser ru
         JOIN ru.chatRoom r
         LEFT JOIN r.lastMessage lm
+        LEFT JOIN DirectChat dc ON dc.chatRoom.id = r.roomId
+        LEFT JOIN User otherU ON (
+            (dc.userA.id = :userId AND otherU.id = dc.userB.id) OR 
+            (dc.userB.id = :userId AND otherU.id = dc.userA.id)
+        )
         WHERE ru.user.id = :userId
     """)
     Page<ChatRoomListItemResponse> findMyRoomListDto(@Param("userId") Long userId, Pageable pageable);
-
 }
