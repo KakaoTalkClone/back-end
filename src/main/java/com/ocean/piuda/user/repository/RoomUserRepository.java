@@ -19,6 +19,9 @@ public interface RoomUserRepository extends JpaRepository<RoomUser, Long> {
 
     Optional<RoomUser> findByChatRoomRoomIdAndUserId(Long roomId, Long userId);
 
+    // [추가됨] 해당 방의 모든 참여자 조회 (채팅방 목록 갱신 알림용)
+    List<RoomUser> findByChatRoomRoomId(Long roomId);
+
     @Query("""
         select count(ru)
         from RoomUser ru
@@ -35,8 +38,6 @@ public interface RoomUserRepository extends JpaRepository<RoomUser, Long> {
     /**
      * [N+1 문제 해결]
      * 내 채팅방 목록 + 마지막 메시지 + 안 읽은 개수를 '한 번의 쿼리'로 조회
-     *
-     * JPQL의 SELECT절 서브쿼리를 사용하여 각 방(Row)마다 안 읽은 메시지 수를 즉시 계산합니다.
      */
     @Query("""
         SELECT new com.ocean.piuda.chatRoom.dto.response.ChatRoomListItemResponse(

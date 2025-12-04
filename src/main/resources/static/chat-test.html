@@ -8,135 +8,43 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
     <style>
-        /* [스타일] 전체 레이아웃 및 디자인 */
+        /* [스타일] 기존과 동일 */
         * { box-sizing: border-box; }
-
-        body {
-            font-family: 'Consolas', 'Segoe UI', sans-serif;
-            padding: 10px;
-            font-size: 13px;
-            background: #f0f2f5;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden; /* 스크롤 방지 (내부 스크롤 사용) */
-        }
-
-        .container {
-            display: flex;
-            gap: 15px;
-            max-width: 1200px;
-            margin: 0 auto;
-            height: 95vh;
-            padding: 10px 0;
-        }
-
-        .box {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-        }
-
-        /* 왼쪽 패널 (로그인, 방목록) */
+        body { font-family: 'Consolas', 'Segoe UI', sans-serif; padding: 10px; font-size: 13px; background: #f0f2f5; height: 100vh; margin: 0; overflow: hidden; }
+        .container { display: flex; gap: 15px; max-width: 1200px; margin: 0 auto; height: 95vh; padding: 10px 0; }
+        .box { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; padding: 15px; }
         .left-panel { width: 350px; gap: 10px; }
-
-        .room-list {
-            flex: 1; /* 남은 공간 채우기 */
-            min-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            margin-top: 5px;
-            background-color: #fafafa;
-        }
-
-        .room-item {
-            padding: 12px 10px;
-            border-bottom: 1px solid #f0f0f0;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .room-list { flex: 1; min-height: 200px; overflow-y: auto; border: 1px solid #eee; margin-top: 5px; background-color: #fafafa; }
+        .room-item { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
         .room-item:hover { background: #eef; }
         .room-item.active { background: #e6f7ff; border-left: 4px solid #1890ff; }
-
-        /* 오른쪽 패널 (채팅창) */
         .chat-panel { flex: 1; gap: 10px; }
-
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            background: #b2c7d9; /* 카톡 배경색 느낌 */
-            border: 1px solid #eee;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        /* 말풍선 스타일 */
+        .messages { flex: 1; overflow-y: auto; background: #b2c7d9; border: 1px solid #eee; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
         .msg-row { display: flex; flex-direction: column; max-width: 70%; }
         .msg-row.me { align-self: flex-end; align-items: flex-end; }
         .msg-row.other { align-self: flex-start; align-items: flex-start; }
-
         .bubble-container { display: flex; align-items: flex-end; gap: 5px; }
         .me .bubble-container { flex-direction: row-reverse; }
-
         .bubble { padding: 8px 12px; border-radius: 4px; position: relative; word-wrap: break-word; font-size: 14px;}
-        .me .bubble { background: #ffeb33; color: black; } /* 카톡 내 말풍선 */
+        .me .bubble { background: #ffeb33; color: black; }
         .other .bubble { background: white; border: 1px solid #ddd; color: black; }
-
         .sender { font-size: 11px; color: #555; margin-bottom: 4px; margin-left: 2px; }
         .time { font-size: 10px; color: #555; margin-top: 2px; min-width: 50px;}
         .me .time { text-align: right; }
-
-        /* 읽음 숫자 (노란색/주황색) */
-        .unread-cnt {
-            font-size: 10px;
-            color: #ffeb33; /* 배경이 어두우면 밝게, 여기선 배경이 밝으므로 진한색 */
-            color: #d6a100;
-            font-weight: bold;
-            margin-bottom: 2px;
-            min-width: 10px;
-            text-align: center;
-        }
-
-        /* 상태 배지 */
+        .unread-cnt { font-size: 10px; color: #d6a100; font-weight: bold; margin-bottom: 2px; min-width: 10px; text-align: center; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; color: white; font-weight: bold; }
         .bg-red { background: #ff4d4f; }
         .bg-green { background: #52c41a; }
-
-        /* 로그창 */
-        #consoleLog {
-            height: 80px;
-            background: #222;
-            color: #0f0;
-            overflow-y: auto;
-            padding: 10px;
-            font-size: 11px;
-            border-radius: 4px;
-            margin-top: 5px;
-        }
-
-        /* 입력 폼 공통 */
+        #consoleLog { height: 80px; background: #222; color: #0f0; overflow-y: auto; padding: 10px; font-size: 11px; border-radius: 4px; margin-top: 5px; }
         .action-row { display: flex; gap: 5px; margin-top: 5px; width: 100%; }
         .action-row input { flex: 1; padding: 8px; min-width: 0; border: 1px solid #ccc; border-radius: 4px; }
-        .action-row button {
-            cursor: pointer;
-            flex-shrink: 0;
-            white-space: nowrap;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 6px 12px;
-        }
+        .action-row button { cursor: pointer; flex-shrink: 0; white-space: nowrap; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; padding: 6px 12px; }
         .action-row button:hover { background-color: #e0e0e0; }
-
         .full-width-input { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; }
         h3 { margin: 5px 0; font-size: 14px; color: #333; display: flex; align-items: center; gap: 5px; }
+
+        /* 뱃지 스타일 추가 */
+        .list-badge { background:red; color:white; border-radius:50%; padding:2px 6px; font-size:10px; margin-left: 5px;}
     </style>
 </head>
 <body>
@@ -205,10 +113,10 @@
 
 <script>
     // === [설정] ===
-    //const API = "http://localhost:8080/api";
-    //const WS = "http://localhost:8080/ws";
-    const API = "https://ktalk.shop/api";
-    const WS = "https://ktalk.shop/ws";
+    const API = "http://localhost:8080/api";
+    const WS = "http://localhost:8080/ws";
+    // const API = "https://ktalk.shop/api";
+    // const WS = "https://ktalk.shop/ws";
 
     // === [상태 변수] ===
     let jwt = null;
@@ -216,9 +124,9 @@
     let stomp = null;
     let currRoomId = null;
     let sub = null;
-    let lastRenderedMessageId = 0; // 현재 화면에 그려진 마지막 메시지 ID 추적
+    let userSub = null; // 유저 전용 구독 (목록 갱신용)
+    let lastRenderedMessageId = 0;
 
-    // 로그 유틸
     function log(msg) {
         const c = document.getElementById("consoleLog");
         const t = new Date().toLocaleTimeString();
@@ -226,14 +134,12 @@
         c.scrollTop = c.scrollHeight;
     }
 
-    // 1. 윈도우 포커스 시 읽음 처리 (탭 이동했다가 돌아왔을 때)
     window.addEventListener('focus', () => {
         if (currRoomId && lastRenderedMessageId > 0) {
             triggerRead();
         }
     });
 
-    // 2. 로그인 & 연결
     async function loginAndConnect() {
         const u = document.getElementById("username").value;
         const p = document.getElementById("password").value;
@@ -259,13 +165,24 @@
         if(stomp && stomp.connected) return;
         const socket = new SockJS(WS);
         stomp = Stomp.over(socket);
-        stomp.debug = null; // 콘솔 노이즈 제거 (개발 시 주석 처리 가능)
+        stomp.debug = null;
         stomp.connect({ Authorization: `Bearer ${jwt}` },
             (frame) => {
                 log("웹소켓 연결 완료!");
                 document.getElementById("wsStatus").className = "badge bg-green";
                 document.getElementById("wsStatus").innerText = "Connected";
+
+                // 1. 현재 보고 있는 방 구독
                 if(currRoomId) subscribe(currRoomId);
+
+                // [중요] 2. 내 개인 채널 구독 (목록 갱신용)
+                if(me.id) {
+                    const userTopic = `/topic/user.${me.id}`;
+                    log(`[개인채널] 구독: ${userTopic}`);
+                    userSub = stomp.subscribe(userTopic, (frame) => {
+                        handleRoomListUpdate(JSON.parse(frame.body));
+                    });
+                }
             },
             (err) => {
                 log("웹소켓 연결 실패: " + err);
@@ -275,7 +192,59 @@
         );
     }
 
-    // 3. 방 목록
+    // [중요] 채팅방 목록 실시간 갱신 처리
+    function handleRoomListUpdate(msg) {
+        // msg는 ChatMessageResponse 형식
+        const roomId = msg.roomId;
+        const roomListDiv = document.getElementById("roomList");
+
+        // 현재 목록에 있는 방인지 확인
+        let targetItem = null;
+        document.querySelectorAll('.room-item').forEach(item => {
+            if(parseInt(item.dataset.roomId) === roomId) {
+                targetItem = item;
+            }
+        });
+
+        if (targetItem) {
+            // 1. 기존 방이 있으면 내용 갱신
+            // 미리보기 텍스트
+            const previewEl = targetItem.querySelector('.preview-text');
+            if(previewEl) previewEl.innerText = msg.content;
+
+            // 뱃지 업데이트 (내가 보낸게 아니고, 현재 보고 있는 방이 아니면 +1)
+            if(msg.senderId !== me.id && currRoomId !== roomId) {
+                const badgeEl = targetItem.querySelector('.list-badge');
+                if(badgeEl) {
+                    let cnt = parseInt(badgeEl.innerText);
+                    badgeEl.innerText = cnt + 1;
+                    badgeEl.style.display = 'inline-block';
+                } else {
+                    // 뱃지가 없었는데 새로 생겨야 함
+                    const typeSpan = targetItem.querySelector('.room-meta');
+                    if(typeSpan) {
+                         typeSpan.insertAdjacentHTML('beforeend', `<span class="list-badge">1</span>`);
+                    }
+                }
+            }
+
+            // 목록 맨 위로 이동
+            roomListDiv.prepend(targetItem);
+
+            // 깜빡임 효과 (선택사항)
+            targetItem.style.backgroundColor = '#fff0f0';
+            setTimeout(() => {
+                targetItem.style.backgroundColor = (roomId === currRoomId) ? '#e6f7ff' : '';
+            }, 300);
+
+        } else {
+            // 2. 목록에 없는 방이면 (새 초대 등) 전체 새로고침이 제일 안전
+            log("새로운 방/초대 감지 -> 목록 갱신");
+            loadRooms();
+        }
+    }
+
+
     async function loadRooms() {
         if(!jwt) return;
         try {
@@ -288,19 +257,21 @@
                 const name = r.roomName ? r.roomName : `(이름없음) 방 #${r.roomId}`;
                 const div = document.createElement("div");
                 div.className = "room-item";
+                div.dataset.roomId = r.roomId; // [중요] ID 식별자 추가
                 if(r.roomId === currRoomId) div.classList.add("active");
 
-                const unreadBadge = r.unreadCount > 0
-                    ? `<span style="background:red; color:white; border-radius:50%; padding:2px 6px; font-size:10px;">${r.unreadCount}</span>`
-                    : '';
+                const unreadStyle = r.unreadCount > 0 ? '' : 'display:none;';
 
                 div.innerHTML = `
                     <div style="overflow:hidden; text-overflow:ellipsis; width:100%;">
                         <div style="font-weight:bold; display:flex; justify-content:space-between;">
                             <span>${name}</span>
-                            <span style="font-size:10px; color:gray; font-weight:normal;">${r.roomType} ${unreadBadge}</span>
+                            <span class="room-meta" style="font-size:10px; color:gray; font-weight:normal;">
+                                ${r.roomType}
+                                <span class="list-badge" style="${unreadStyle}">${r.unreadCount}</span>
+                            </span>
                         </div>
-                        <div style="font-size:11px; color:#666; margin-top:2px;">${r.lastMessagePreview || "내용 없음"}</div>
+                        <div class="preview-text" style="font-size:11px; color:#666; margin-top:2px;">${r.lastMessagePreview || "내용 없음"}</div>
                     </div>
                 `;
                 div.onclick = () => enterRoom(r.roomId, name, r.roomType);
@@ -309,7 +280,6 @@
         } catch(e) { log("방 목록 로드 실패"); }
     }
 
-    // 4. 방 생성 관련 함수들
     async function createDirect() {
         const target = document.getElementById("targetId").value;
         if(!target) return alert("상대 ID 입력");
@@ -337,7 +307,6 @@
         } catch(e) { alert(e.response?.data?.message || "생성 실패"); }
     }
 
-    // 5. 방 입장 (메시지 로드 + 구독)
     async function enterRoom(roomId, roomName, roomType) {
         if(!stomp || !stomp.connected) return alert("연결 대기 중...");
 
@@ -349,67 +318,63 @@
         document.getElementById("msgArea").innerHTML = "";
         document.getElementById("roomActions").style.display = "flex";
 
-        document.querySelectorAll(".room-item").forEach(el => el.classList.remove("active"));
-        loadRooms();
+        // 목록 UI 상태 업데이트 (Active 표시 및 뱃지 제거)
+        document.querySelectorAll(".room-item").forEach(el => {
+            el.classList.remove("active");
+            if(parseInt(el.dataset.roomId) === roomId) {
+                el.classList.add("active");
+                const badge = el.querySelector('.list-badge');
+                if(badge) {
+                    badge.innerText = '0';
+                    badge.style.display = 'none';
+                }
+            }
+        });
 
         try {
             const res = await axios.get(`${API}/chat/rooms/${roomId}/messages`, { headers: { Authorization: `Bearer ${jwt}` }});
             const msgs = res.data.data.content.reverse();
             msgs.forEach(m => renderMsg(m));
-
-            // 입장 즉시 읽음 처리
             triggerRead();
         } catch(e) { log("메시지 로드 실패"); }
 
         subscribe(roomId);
     }
 
-    // [핵심] 구독 및 실시간 처리
     function subscribe(roomId) {
         if(sub) sub.unsubscribe();
         const topic = `/topic/chatroom.${roomId}`;
-        log(`[구독] ${topic}`);
+        log(`[방 구독] ${topic}`);
 
         sub = stomp.subscribe(topic, (frame) => {
             const msg = JSON.parse(frame.body);
 
-            // A. 일반 메시지가 온 경우 (content 필드가 있음)
             if(msg.content !== undefined) {
+                // 이 방을 보고 있으면 바로 렌더링
                 renderMsg(msg);
-                // 내가 보고 있으면 바로 읽음 신호 보냄
                 if(document.visibilityState === 'visible' && currRoomId === roomId) {
                     triggerRead();
                 }
             }
-            // B. 읽음 이벤트(Read Receipt)가 온 경우 (ChatReadResponse)
             else if(msg.userId && msg.messageId) {
-                // 내 아이디가 보낸 읽음 신호는 무시 (이미 처리됨 or 불필요)
-                // 하지만 내가 다른 기기에서 읽었을 수도 있으니 UI 갱신은 수행
                 console.log(`User ${msg.userId} read up to ${msg.messageId}`);
                 updateUnreadCounts(msg.messageId);
             }
         });
     }
 
-    // [핵심] 화면 숫자 실시간 차감 (DOM 조작)
     function updateUnreadCounts(readMessageId) {
-        // 화면에 있는 모든 메시지 말풍선(msg-row)을 찾음
         const rows = document.querySelectorAll('.msg-row');
-
         rows.forEach(row => {
-            // 이 메시지의 ID
             const msgId = parseInt(row.dataset.msgId);
-
-            // "누군가 읽은 메시지 ID"보다 이 메시지가 작거나 같으면 -> 읽힌 것임
             if(msgId <= readMessageId) {
                 const countSpan = row.querySelector('.unread-cnt');
                 if(countSpan) {
                     let current = parseInt(countSpan.innerText);
-                    // 숫자가 있고 0보다 크면 1 줄임
                     if(!isNaN(current) && current > 0) {
                         current--;
                         if(current <= 0) {
-                            countSpan.style.display = 'none'; // 0되면 숨김
+                            countSpan.style.display = 'none';
                             countSpan.innerText = 0;
                         } else {
                             countSpan.innerText = current;
@@ -429,10 +394,8 @@
         input.value = "";
     }
 
-    // [수정됨] 읽음 신호 보내기 (현재 화면의 가장 마지막 메시지 ID 기준)
     function triggerRead() {
         if(!currRoomId || !stomp || !stomp.connected || lastRenderedMessageId === 0) return;
-
         const payload = { roomId: currRoomId, messageId: lastRenderedMessageId };
         stomp.send("/pub/chat/read", { Authorization: `Bearer ${jwt}` }, JSON.stringify(payload));
     }
