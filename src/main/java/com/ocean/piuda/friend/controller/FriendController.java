@@ -32,12 +32,13 @@ public class FriendController {
     @Operation(summary = "친구 목록 조회", description = "size, page를 통해 친구 목록을 조회합니다.")
     public ApiData<PageResponse<FriendResponse>> getFriendList(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nickname
     ) {
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<FriendResponse> response = friendService.findFriendFrom(securityUtil.getUserId(), pageable);
+        Page<FriendResponse> response = friendService.findFriendFrom(securityUtil.getUserId(), nickname, pageable);
 
         return ApiData.ok(PageResponse.of(response));
     }

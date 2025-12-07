@@ -32,8 +32,12 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
      left join UserImage ui on ui.user = u and ui.type = com.ocean.piuda.image.enums.UserImageType.PROFILE
      left join Image i on i.id = ui.image.id
      where f.user.id = :userId
+       and (:nickname is null or u.nickname like %:nickname%)
     """)
-    Page<FriendResponse> findFriendByPage(Long userId, Pageable pageable);
+    Page<FriendResponse> findFriendByPage(
+            @Param("userId") Long userId,
+            @Param("nickname") String nickname,
+            Pageable pageable);
 
 
 //    @Schema(description = "프로필 이미지 URL", example = "https://example.com/image.jpg")
