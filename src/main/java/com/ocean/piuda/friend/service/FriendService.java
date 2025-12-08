@@ -63,8 +63,8 @@ public class FriendService {
         return friendRepository.save(friend);
     }
 
-    public Page<FriendResponse> findFriendFrom(Long userId, Pageable pageable) {
-        return friendRepository.findFriendByPage(userId, pageable);
+    public Page<FriendResponse> findFriendFrom(Long userId, String nickname, Pageable pageable) {
+        return friendRepository.findFriendByPage(userId, nickname, pageable);
     }
 
     public Optional<Friend> findFriendFrom(Long userId, Long friendUserId){
