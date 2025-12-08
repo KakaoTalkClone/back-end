@@ -15,6 +15,7 @@ import com.ocean.piuda.chatRoom.entity.ChatRoom;
 import com.ocean.piuda.chatRoom.enums.ChatRoomType;
 import com.ocean.piuda.global.api.exception.BusinessException;
 import com.ocean.piuda.global.api.exception.ExceptionType;
+import com.ocean.piuda.notification.service.FcmCommandService; // [추가]
 import com.ocean.piuda.user.entity.RoomUser;
 import com.ocean.piuda.user.entity.User;
 import com.ocean.piuda.user.repository.RoomUserRepository;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture; // [추가]
 
 @Slf4j
 @RequiredArgsConstructor
@@ -42,6 +44,7 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final UserQueryService userQueryService;
     private final com.ocean.piuda.chatRoom.service.ChatRoomQueryService chatRoomQueryService;
+    private final FcmCommandService fcmCommandService; // [추가]
 
     /**
      * 채팅 메시지 전송
@@ -51,7 +54,7 @@ public class ChatService {
         ChatRoom chatRoom = chatRoomQueryService.getRoomById(req.roomId());
         User sender = userQueryService.getUserById(senderId);
 
-        // 방 참여자 검증 [수정됨]
+        // 방 참여자 검증
         roomUserRepository.findByChatRoomRoomIdAndUserId(chatRoom.getRoomId(), senderId)
                 .orElseThrow(() -> new BusinessException(ExceptionType.ACCESS_DENIED));
 
@@ -69,7 +72,7 @@ public class ChatService {
         // 마지막 메시지 갱신
         chatRoom.updateLastMessage(savedMessage);
 
-        // 보낸 사람의 lastReadMessage 갱신 (자기가 보낸건 자기가 읽은 것이므로) [수정됨]
+        // 보낸 사람의 lastReadMessage 갱신
         roomUserRepository.findByChatRoomRoomIdAndUserId(chatRoom.getRoomId(), senderId)
                 .ifPresent(ru -> ru.markAsRead(savedMessage));
 
@@ -84,15 +87,48 @@ public class ChatService {
     }
 
     /**
+     * [추가됨] 알림 발송 (비동기)
+     * Controller에서 메시지 전송 및 소켓 발송 후 호출됨
+     */
+    public void sendNotification(ChatMessageResponse messageResponse) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                // 1. 방 멤버 전체 ID 조회
+                List<RoomUser> members = roomUserRepository.findByChatRoomRoomId(messageResponse.roomId());
+                List<Long> memberIds = members.stream()
+                        .map(ru -> ru.getUser().getId())
+                        .toList();
+
+                // 2. 메시지 타입에 따른 본문 처리
+                String body = messageResponse.content();
+                if (messageResponse.contentType() == ContentType.IMAGE) {
+                    body = "(사진)";
+                } else if (messageResponse.contentType() == ContentType.FILE) {
+                    body = "(파일)";
+                }
+
+                // 3. FCM 전송 서비스 호출
+                fcmCommandService.sendChatPush(
+                        messageResponse.senderId(),
+                        messageResponse.senderNickname(),
+                        body,
+                        messageResponse.roomId(),
+                        memberIds
+                );
+            } catch (Exception e) {
+                log.error("채팅 알림 전송 중 오류 발생: {}", e.getMessage());
+            }
+        });
+    }
+
+    /**
      * 방 메시지 조회 + 읽음 처리 (입장 시 호출)
      */
     @Transactional
     public Page<ChatMessageResponse> getMessages(Long roomId, Long userId, int page, int size) {
-        // [수정됨]
         RoomUser roomUser = roomUserRepository.findByChatRoomRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new BusinessException(ExceptionType.ACCESS_DENIED));
 
-        // [수정됨]
         Page<Message> messagePage =
                 messageRepository.findByChatRoomRoomIdOrderByMessageIdDesc(roomId, PageRequest.of(page, size));
 
@@ -116,24 +152,20 @@ public class ChatService {
 
     /**
      * [핵심] 메시지 읽음 처리 (실시간 소켓 요청용)
-     * 이미 읽은 위치보다 과거의 요청이 오면 무시(null 반환)하여 중복 브로드캐스트 방지
      */
     @Transactional
     public ChatReadResponse markStreamAsRead(Long userId, ChatReadRequest req) {
-        // [수정됨]
         RoomUser roomUser = roomUserRepository.findByChatRoomRoomIdAndUserId(req.roomId(), userId)
                 .orElseThrow(() -> new BusinessException(ExceptionType.ACCESS_DENIED));
 
         Message message = messageRepository.findById(req.messageId())
                 .orElseThrow(() -> new BusinessException(ExceptionType.RESOURCE_NOT_FOUND));
 
-        // 1. 중복 체크: 이미 읽은 메시지 ID보다 작거나 같으면 업데이트 안 함
         if (roomUser.getLastReadMessage() != null &&
                 roomUser.getLastReadMessage().getMessageId() >= message.getMessageId()) {
             return null; // 변경 없음
         }
 
-        // 2. 업데이트 수행
         roomUser.markAsRead(message);
 
         return ChatReadResponse.builder()
@@ -223,7 +255,6 @@ public class ChatService {
             throw new BusinessException(ExceptionType.INVALID_VALUE_ERROR, Map.of("message", "1:1 채팅방에는 초대할 수 없습니다."));
         }
 
-        // [수정됨]
         roomUserRepository.findByChatRoomRoomIdAndUserId(roomId, inviterId)
                 .orElseThrow(() -> new BusinessException(ExceptionType.ACCESS_DENIED));
 
@@ -233,7 +264,6 @@ public class ChatService {
                 .toList();
 
         for (User target : targets) {
-            // [수정됨]
             if (roomUserRepository.findByChatRoomRoomIdAndUserId(roomId, target.getId()).isPresent()) continue;
 
             RoomUser ru = RoomUser.builder()
@@ -249,7 +279,6 @@ public class ChatService {
      */
     @Transactional
     public void leaveRoom(Long roomId, Long userId) {
-        // [수정됨]
         RoomUser roomUser = roomUserRepository.findByChatRoomRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new BusinessException(ExceptionType.RESOURCE_NOT_FOUND));
 
