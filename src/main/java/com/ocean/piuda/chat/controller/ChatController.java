@@ -25,7 +25,7 @@ public class ChatController {
 
     private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
-    // [추가됨] 채팅방 목록 갱신 대상을 찾기 위해 필요
+    // 채팅방 목록 갱신 대상을 찾기 위해 필요
     private final RoomUserRepository roomUserRepository;
 
     /**
@@ -63,6 +63,9 @@ public class ChatController {
             }
             log.info(">>> [STOMP] 5. 목록 갱신 알림 완료 (대상 {}명)", members.size());
 
+            // 4. [추가됨] FCM 푸시 알림 발송 (비동기 호출)
+            chatService.sendNotification(response);
+
         } catch (Exception e) {
             log.error(">>> [STOMP] 처리 중 예상치 못한 에러 발생", e);
         }
@@ -84,14 +87,10 @@ public class ChatController {
             // 1. 서비스 호출
             ChatReadResponse response = chatService.markStreamAsRead(userId, req);
 
-            // 2. [핵심] 변경사항이 있을 때만(null이 아닐 때만) 브로드캐스트
+            // 2. 변경사항이 있을 때만(null이 아닐 때만) 브로드캐스트
             if (response != null) {
                 messagingTemplate.convertAndSend("/topic/chatroom." + req.roomId(), response);
                 log.info(">>> [STOMP] 읽음 처리 방송: User {} -> Msg {}", userId, req.messageId());
-
-                // (선택사항) 읽음 처리에 따라 채팅방 목록의 뱃지도 줄어들어야 한다면
-                // 여기서도 /topic/user.{userId} 로 쏘아줄 수 있음.
-                // 하지만 보통 '내가 읽은 것'은 클라이언트가 바로 알고 있으므로 생략 가능.
             }
 
         } catch (Exception e) {

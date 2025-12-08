@@ -25,7 +25,7 @@ public class FcmToken extends BaseEntity {
     /**
      * 브라우저/기기 식별자 (optional)
      */
-    @Column(length = 100)
+    @Column(length = 500)
     private String deviceId;
 
     /**

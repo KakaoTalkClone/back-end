@@ -7,15 +7,16 @@ import com.ocean.piuda.notification.dto.response.SendResultResponse;
 import com.ocean.piuda.notification.entity.FcmToken;
 import com.ocean.piuda.notification.repository.FcmTokenRepository;
 import com.ocean.piuda.user.entity.User;
-import com.ocean.piuda.user.repository.UserRepository;
 import com.ocean.piuda.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -31,7 +32,6 @@ public class FcmCommandService {
         User user = userQueryService.getUserById(userId);
         FcmToken existing = fcmTokenRepository.findByToken(req.token()).orElse(null);
         if (existing != null) {
-            // 소유자/클라이언트 정보 갱신만 허용
             existing.upsertUser(user);
             existing.updateClientInfo(req.deviceId(), req.platform());
             return existing;
@@ -50,38 +50,17 @@ public class FcmCommandService {
         fcmTokenRepository.deleteByToken(token);
     }
 
-
-    /**
-     * 단체/개인 알림 발송 처리
-     */
     public SendResultResponse send(SendNotificationRequest req) throws FirebaseMessagingException {
-
-        // 1) 대상 토큰 수집 (userIds + tokens 합집합)
         Set<String> targetTokens = new LinkedHashSet<>();
 
-        /*
-        // 임시 처리 코드
-        List<Long> tmp = new ArrayList<>();
-        tmp.add(1L);
-        List<User> users = tmp.stream()
-                .map(userQueryService::getUserById)
-                .toList();
-
-        users.forEach(u -> fcmTokenRepository.findAllByUser(u).forEach(t -> targetTokens.add(t.getToken())));
-  */
-
-
-       if (req.userIds() != null && !req.userIds().isEmpty()) {
-            // 유저별 모든 토큰 조회
+        if (req.userIds() != null && !req.userIds().isEmpty()) {
             List<User> users = req.userIds().stream()
                     .map(userQueryService::getUserById)
                     .toList();
-
             users.forEach(u -> fcmTokenRepository.findAllByUser(u).forEach(t -> targetTokens.add(t.getToken())));
         }
 
         if (req.tokens() != null && !req.tokens().isEmpty()) targetTokens.addAll(req.tokens());
-
 
         if (targetTokens.isEmpty()) {
             return SendResultResponse.builder()
@@ -89,7 +68,6 @@ public class FcmCommandService {
                     .build();
         }
 
-        // 2) 500개씩 청크로 쪼개 전송
         int success = 0, failure = 0;
         List<String> messageIds = new ArrayList<>();
 
@@ -108,8 +86,82 @@ public class FcmCommandService {
     }
 
     /**
-     * 헬퍼
+     * [수정됨] 실시간 채팅 알림 전송
+     * - roomId를 '공통 데이터(putData)'에 포함시켜 웹에서도 받을 수 있게 수정함
      */
+    public void sendChatPush(Long senderId, String senderNickname, String content, Long roomId, List<Long> targetUserIds) {
+        if (targetUserIds == null || targetUserIds.isEmpty()) return;
+
+        List<Long> actualTargets = targetUserIds.stream()
+                .filter(id -> !id.equals(senderId))
+                .toList();
+
+        if (actualTargets.isEmpty()) return;
+
+        Set<String> tokens = new HashSet<>();
+        for (Long targetId : actualTargets) {
+            try {
+                User user = userQueryService.getUserById(targetId);
+                fcmTokenRepository.findAllByUser(user).forEach(t -> tokens.add(t.getToken()));
+            } catch (Exception e) {
+                log.warn("채팅 알림 대상 유저 조회 실패: {}", targetId);
+            }
+        }
+
+        if (tokens.isEmpty()) return;
+
+        for (List<String> chunk : partition(new ArrayList<>(tokens), FCM_MULTICAST_LIMIT)) {
+            try {
+                MulticastMessage msg = MulticastMessage.builder()
+                        // ★★★ [핵심 수정] 공통 데이터 영역에 roomId 추가 (웹/안드/iOS 모두 수신 가능) ★★★
+                        .putData("type", "CHAT")
+                        .putData("roomId", String.valueOf(roomId))
+                        .putData("senderName", senderNickname)
+
+                        // [Web Push 설정]
+                        .setWebpushConfig(WebpushConfig.builder()
+                                .setNotification(WebpushNotification.builder()
+                                        .setTitle(senderNickname)
+                                        .setBody(content)
+                                        .build())
+                                // withLink를 제거하거나 유지해도 됨 (JS에서 처리하므로)
+                                .build())
+
+                        // [Android 설정] - 공통 데이터가 있으므로 putData 중복 생략 가능하지만 명시적 유지
+                        .setAndroidConfig(AndroidConfig.builder()
+                                .setPriority(AndroidConfig.Priority.HIGH)
+                                .setNotification(AndroidNotification.builder()
+                                        .setTitle(senderNickname)
+                                        .setBody(content)
+                                        .setClickAction("FLUTTER_NOTIFICATION_CLICK")
+                                        .build())
+                                .build())
+
+                        // [iOS(APNs) 설정]
+                        .setApnsConfig(ApnsConfig.builder()
+                                .setAps(Aps.builder()
+                                        .setAlert(ApsAlert.builder()
+                                                .setTitle(senderNickname)
+                                                .setBody(content)
+                                                .build())
+                                        .setSound("default")
+                                        // iOS는 customData가 별도라 여기도 필요함
+                                        .putCustomData("type", "CHAT")
+                                        .putCustomData("roomId", String.valueOf(roomId))
+                                        .build())
+                                .build())
+                        .addAllTokens(chunk)
+                        .build();
+
+                messaging.sendEachForMulticast(msg);
+                log.info("채팅 알림 발송 완료: 방 #{} -> {}개 토큰", roomId, chunk.size());
+
+            } catch (FirebaseMessagingException e) {
+                log.error("채팅 알림 발송 실패", e);
+            }
+        }
+    }
+
     public SendResultResponse sendToUser(Long userId, String title, String body, String url) throws FirebaseMessagingException {
         User user = userQueryService.getUserById(userId);
         List<String> tokens = fcmTokenRepository.findAllByUser(user).stream().map(FcmToken::getToken).toList();
@@ -136,7 +188,6 @@ public class FcmCommandService {
 
         BatchResponse batch = messaging.sendEachForMulticast(msg);
 
-        // 실패 토큰 정리
         List<String> toDelete = new ArrayList<>();
         List<String> messageIds = new ArrayList<>();
 
@@ -155,7 +206,6 @@ public class FcmCommandService {
         }
         toDelete.forEach(fcmTokenRepository::deleteByToken);
 
-        // Multicast는 개별 messageId 수집을 보장하진 않으니 빈 리스트로 반환(필요시 추후 확장)
         return SendResultResponse.builder()
                 .successCount(batch.getSuccessCount())
                 .failureCount(batch.getFailureCount())
@@ -163,9 +213,6 @@ public class FcmCommandService {
                 .build();
     }
 
-    /**
-     *유틸
-     */
     private static <T> List<List<T>> partition(List<T> list, int size) {
         if (size <= 0) throw new IllegalArgumentException("size must be > 0");
         int n = list.size();
@@ -176,6 +223,3 @@ public class FcmCommandService {
         return parts;
     }
 }
-
-
-
